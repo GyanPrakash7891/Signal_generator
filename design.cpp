@@ -3,7 +3,7 @@
 #include <cmath>
 #include <algorithm>
 #include <cstdio>
-#include "GL/glut.h"
+#include <iomanip>
 using namespace std;
 
 // Global variables
@@ -224,94 +224,35 @@ void findLongestZeroRun(int* signal, int n) {
              << " zeros starting at position " << maxStart << endl;
 }
 
-// OPENGL:-
-
-void drawText(float x, float y, const char* text) {
-    glRasterPos2f(x, y);
-    for (int i = 0; text[i] != '\0'; i++) {
-        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, text[i]);
-    }
-}
-
-void drawBoldText(float x, float y, const char* text) {
-    glRasterPos2f(x, y);
-    for (int i = 0; text[i] != '\0'; i++) {
-        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, text[i]);
-    }
-}
-
-void display() {
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    if (currentSignal == nullptr || signalLength == 0) {
-        glFlush();
-        return;
-    }
-
-    float yScale = 0.35f;
-
-    // Title (White text for black background)
-    glColor3f(1.0, 1.0, 1.0);
-    drawBoldText(-0.95f, 0.92f, signalTitle);
-
-    // Axes (Gray lines)
-    glColor3f(0.7, 0.7, 0.7);
-    glLineWidth(2.0f);
-    glBegin(GL_LINES);
-        glVertex2f(-0.9f, 0.0f);
-        glVertex2f(0.9f, 0.0f);
-        glVertex2f(-0.9f, -0.8f);
-        glVertex2f(-0.9f, 0.8f);
-    glEnd();
-
-    // Grid lines (Dim gray)
-    glColor3f(0.3, 0.3, 0.3);
-    glLineWidth(1.0f);
-    glBegin(GL_LINES);
-        glVertex2f(-0.9f, 1.0f * yScale);
-        glVertex2f(0.9f, 1.0f * yScale);
-        glVertex2f(-0.9f, -1.0f * yScale);
-        glVertex2f(0.9f, -1.0f * yScale);
-    glEnd();
-
-    // Signal line (Bright cyan)
-    glColor3f(0.0, 1.0, 1.0);
-    glLineWidth(3.0f);
-    glBegin(GL_LINE_STRIP);
-        float xStep = 1.8f / signalLength;
-        for (int i = 0; i < signalLength; i++) {
-            float x1 = -0.9f + i * xStep;
-            float x2 = -0.9f + (i + 1) * xStep;
-            float y = currentSignal[i] * yScale;
-
-            glVertex2f(x1, y);
-            glVertex2f(x2, y);
-
-            if (i < signalLength - 1) {
-                float nextY = currentSignal[i + 1] * yScale;
-                glVertex2f(x2, y);
-                glVertex2f(x2, nextY);
-            }
-        }
-    glEnd();
-
-    glFlush();
-}
-
-// ✅ Background color changed here
-void initializeGL() {
-    glClearColor(0.0, 0.0, 0.0, 1.0);  // BLACK background
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluOrtho2D(-1.0, 1.0, -1.0, 1.0);
-}
-
+// Console-based visualization
 void showSignal(int* signal, int len, const char* title, bool manchester) {
-    currentSignal = signal;
-    signalLength = len;
-    strcpy(signalTitle, title);
-    isManchester = manchester;
-    glutPostRedisplay();
+    cout << "\n" << title << "\n\n";
+    
+    // Draw top border
+    cout << "+";
+    for(int i = 0; i < len * 4; i++) cout << "-";
+    cout << "+\n";
+    
+    // Draw signal
+    cout << "|";
+    for(int i = 0; i < len; i++) {
+        if(signal[i] == 1) cout << " ▀▀ ";
+        else if(signal[i] == -1) cout << " ▄▄ ";
+        else cout << " -- ";
+    }
+    cout << "|\n";
+    
+    // Draw bottom border
+    cout << "+";
+    for(int i = 0; i < len * 4; i++) cout << "-";
+    cout << "+\n\n";
+    
+    // Show signal values
+    cout << "Signal values: ";
+    for(int i = 0; i < len; i++) {
+        cout << setw(2) << signal[i] << " ";
+    }
+    cout << "\n";
 }
 
 // MAIN:-
@@ -432,18 +373,7 @@ int main(int argc, char** argv) {
     for (int i = 0; i < encLen; i++) cout << encoded[i] << " ";
     cout << endl;
 
-    glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
-    glutInitWindowSize(1200, 700);
-    glutInitWindowPosition(50, 50);
-    glutCreateWindow("Digital Signal Visualization");
-
-    initializeGL();
     showSignal(encoded, encLen, title, manchesterFlag);
-    glutDisplayFunc(display);
-
-    cout << "\nOpenGL window opened. Close to exit..." << endl;
-    glutMainLoop();
 
     delete[] encoded;
     return 0;
